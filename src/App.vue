@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { NConfigProvider } from 'naive-ui';
+import { NConfigProvider, NThemeEditor } from 'naive-ui';
 import { toRefs } from 'vue';
-import { useThemeStore } from './store/themeStore';
+import { useThemeStore } from '@/store/themeStore';
+import useAutoSetMenuCollapse from '@/hooks/advanced/useAutoSetMenuCollapse';
 
 const themeStore = useThemeStore();
-const { NThemeConfig } = toRefs(themeStore);
+const { themeOverrides, theme } = toRefs(themeStore);
+useAutoSetMenuCollapse();
 </script>
 
 <template>
-    <n-config-provider :theme-overrides="NThemeConfig">
+    <n-config-provider :theme="theme" :theme-overrides="themeOverrides">
         <router-view />
     </n-config-provider>
 </template>

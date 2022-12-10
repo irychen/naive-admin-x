@@ -1,3 +1,14 @@
 // @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html,body{
+  width: 100%;
+  min-height: 100vh;
+  padding: 0px;
+  margin: 0;
+}
+
+#nprogress .bar {
+  background: #29d !important;
+}
