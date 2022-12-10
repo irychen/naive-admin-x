@@ -2,12 +2,13 @@ import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } 
 import { close, start } from '@/utils/nprogress';
 import { getToken } from '@/utils/token';
 import { MENUS } from '@/config';
+
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
         name: 'Home',
         component: () => import('@/pages/Home.vue'),
-        children: MENUS,
+        children: MENUS as RouteRecordRaw[],
     },
     {
         path: '/about',

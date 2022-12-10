@@ -11,6 +11,9 @@ export function useLocalStorage<T>(key: string, ref: Ref<T>) {
                 }),
             );
         },
+        {
+            deep: true,
+        },
     );
     onBeforeMount(() => {
         const dataStr = window.localStorage.getItem(key);
