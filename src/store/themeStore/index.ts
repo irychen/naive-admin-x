@@ -4,13 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import Color from 'color';
 import { useLocalStorage } from '@/hooks/base/useLocalStorage';
 
-const containerColorLight = '#f1f2f3';
-const containerColorDark = '#292929';
-const headerColorLight = '#fff';
-const headerColorDark = '#212121';
-export const lightThemeMenuColorList = ['#222', '#161717', '#18232d',
-    '#fff', '#fbfcff', '#111', '#000', '#001427'];
-export const darkThemeMenuColorList = ['#222','#121212',"#000","#16181c"]
+export const headerColorLight = '#fff';
 // 将主题配置放在 store 中，方便在不同页面更改主题
 export const useThemeStore = defineStore('theme', () => {
     const currentLightMenuColor = ref('#161717');
@@ -23,8 +17,6 @@ export const useThemeStore = defineStore('theme', () => {
     const theme = computed(() => {
         return themeIsDark.value ? darkTheme : null;
     });
-    const containerColor = computed(() => (themeIsDark.value ? containerColorDark : containerColorLight));
-    const headerColor = computed(() => (themeIsDark.value ? headerColorDark : headerColorLight));
     const toggle = (val: boolean) => !val;
     const menuCollapsed = ref(false);
     const toggleMenuCollapse = () => {
@@ -68,6 +60,9 @@ export const useThemeStore = defineStore('theme', () => {
         Drawer: {
             color: '#181818',
         },
+        Card:{
+            color: '#333',
+        }
     });
 
     watch(
@@ -108,8 +103,6 @@ export const useThemeStore = defineStore('theme', () => {
         toggleMenuCollapse,
         menuColorIsDark,
         primaryColor,
-        containerColor,
-        headerColor,
         menuColor,
     };
 });

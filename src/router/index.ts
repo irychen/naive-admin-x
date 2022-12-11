@@ -1,13 +1,14 @@
 import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import { close, start } from '@/utils/nprogress';
 import { getToken } from '@/utils/token';
-import { MENUS } from '@/config';
+import { MENU_BASE_PATH, MENUS } from '@/config';
 
 const routes: Array<RouteRecordRaw> = [
     {
-        path: '/',
+        path: MENU_BASE_PATH,
         name: 'Home',
         component: () => import('@/layouts/BaseLayout.vue'),
+        redirect: { name: 'HomeIndex' },
         children: MENUS as RouteRecordRaw[],
     },
     {

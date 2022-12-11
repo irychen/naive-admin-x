@@ -22,10 +22,13 @@ import { useRouter } from 'vue-router';
 import { MENUS_LIST, LOGO_TEXT, LOGO_SHORT_TEXT, MenuRoute } from '@/config';
 import { toRefs } from 'vue';
 import { useThemeStore } from '@/store/themeStore';
-import { darkThemeMenuColorList, lightThemeMenuColorList } from '@/store/themeStore/index.js';
 import CheckBoxColor from '@/components/CheckBoxColor/index.vue';
 import { useLocalStorage } from '@/hooks/base/useLocalStorage';
 import { RouteLocationNormalizedLoaded } from 'vue-router';
+import { DARK_THEME_MENU_COLORS, LIGHT_THEME_MENU_COLORS, THEME_PRIMARY_COLORS } from '@/config/index.js';
+import useEventListener from '@/hooks/base/useEventListener';
+import Color from 'color';
+import { headerColorLight } from '@/store/themeStore/index.js';
 
 const pageTypeMap = new Map<string, string>([
     ['edit', '编辑'],
@@ -40,8 +43,6 @@ const {
     primaryColorIsDark,
     currentLightMenuColor,
     menuIsInverted,
-    containerColor,
-    headerColor,
     menuCollapsed,
     themeIsDark,
     menuColorIsDark,
@@ -51,6 +52,8 @@ const {
 } = toRefs(themeStore);
 const router = useRouter();
 const menuOptions: MenuOption[] = MENUS_LIST;
+const openKeepAlive = ref<boolean>(false);
+useLocalStorage('openKeepAlive', openKeepAlive);
 // absolutePath Menu Map
 const absolutePathMenuMap = new Map<string, MenuRoute>();
 const nameMenuMap = new Map<string, MenuRoute>();
@@ -88,10 +91,25 @@ onMounted(() => {
     updateTabAndMenuKey(router.currentRoute.value);
 });
 
+const needWatchRoute = ref(true);
+let needWatchRouteTimer: number;
+
+function debouncePendingNeedWatchRoute() {
+    needWatchRoute.value = false;
+    clearTimeout(needWatchRouteTimer);
+    needWatchRouteTimer = setTimeout(() => {
+        needWatchRoute.value = true;
+    }, 500);
+}
+
+// 监听路由变化，设置选中的菜单 浏览器前进后退
+// 非浏览器前进后退，不会触发路由变化
 watch(
     () => router.currentRoute.value,
     newRoute => {
-        updateTabAndMenuKey(newRoute);
+        if (needWatchRoute.value) {
+            updateTabAndMenuKey(newRoute);
+        }
     },
 );
 
@@ -154,13 +172,10 @@ watch(
     },
 );
 
-// 20种不同主题色
-const themeColorList = ['#2995fa', '#1777FF', '#9251ea', '#eb2f96', '#fa541c', '#fa8c16', '#efab25', '#fadb14', '#45bd15', '#0ea22c', '#13c2c2'];
-
 const isShowThemeSettingDrawer = ref(false);
 
 function handleMenuNameChange(name: string) {
-    console.log(name);
+    debouncePendingNeedWatchRoute();
     const target = nameMenuMap.get(name);
     if (target) {
         const tab = tabs.value.find(i => i.name === name);
@@ -187,10 +202,12 @@ function handleMenuNameChange(name: string) {
                 currentTabKey.value = tab.key;
             }
         }
+        router.push(target.absolutePath as string);
     }
 }
 
 function handleTabChange(key: string) {
+    debouncePendingNeedWatchRoute();
     const target = tabs.value.find(i => i.key === key);
     if (target) {
         currentTabKey.value = key;
@@ -208,6 +225,21 @@ function cleanLocalStorage() {
     localStorage.clear();
     window.location.reload();
 }
+
+const canShowDrawerMenu = ref(false);
+useEventListener(
+    'resize',
+    () => {
+        canShowDrawerMenu.value = window.innerWidth <= 580;
+    },
+    true,
+);
+window.onorientationchange = () => {
+    canShowDrawerMenu.value = window.innerWidth <= 580;
+};
+useEventListener('orientationchange', () => {
+    canShowDrawerMenu.value = window.innerWidth <= 580;
+});
 </script>
 
 <template>
@@ -217,6 +249,31 @@ function cleanLocalStorage() {
             dark: themeIsDark,
         }"
     >
+        <n-drawer
+            :style="{
+                backgroundColor: menuColor,
+            }"
+            v-if="canShowDrawerMenu"
+            :show="!menuCollapsed"
+            @update:show="menuCollapsed = !menuCollapsed"
+            :width="220"
+            placement="left"
+        >
+            <n-drawer-content
+                :header-style="{
+                    border: 'none',
+                    color: menuColorIsDark ? '#fff' : '#000',
+                    borderBottom: menuColorIsDark ? '1px solid ' + Color(menuColor).lighten(0.4) : '1px solid ' + Color(menuColor).darken(0.1),
+                }"
+                :body-content-style="{
+                    padding: '0',
+                }"
+                closable
+                :title="LOGO_TEXT"
+            >
+                <n-menu v-model:value="menuSelectedKey" :inverted="menuIsInverted" @update:value="handleMenuNameChange" :options="menuOptions" />
+            </n-drawer-content>
+        </n-drawer>
         <n-drawer v-model:show="isShowThemeSettingDrawer" :width="302" placement="right">
             <n-drawer-content closable title="设置">
                 <n-divider style="margin: 10px 0 16px 0" title-placement="center"> 主题</n-divider>
@@ -229,7 +286,7 @@ function cleanLocalStorage() {
                 <n-divider style="margin: 18px 0 16px 0" title-placement="center"> 主题色</n-divider>
                 <div class="color-blocks flex flex-wrap mb-[10px]">
                     <CheckBoxColor
-                        v-for="color in themeColorList"
+                        v-for="color in THEME_PRIMARY_COLORS"
                         :key="color"
                         :color="color"
                         :active="color === primaryColor"
@@ -241,7 +298,7 @@ function cleanLocalStorage() {
                 <div>
                     <div class="color-blocks flex flex-wrap mb-[10px]" v-if="!themeIsDark">
                         <CheckBoxColor
-                            v-for="color in lightThemeMenuColorList"
+                            v-for="color in LIGHT_THEME_MENU_COLORS"
                             :key="color"
                             :color="color"
                             :active="color === menuColor"
@@ -250,7 +307,7 @@ function cleanLocalStorage() {
                     </div>
                     <div class="color-blocks flex flex-wrap mb-[10px]" v-else>
                         <CheckBoxColor
-                            v-for="color in darkThemeMenuColorList"
+                            v-for="color in DARK_THEME_MENU_COLORS"
                             :key="color"
                             :color="color"
                             :active="color === menuColor"
@@ -261,6 +318,13 @@ function cleanLocalStorage() {
                 <n-divider style="margin: 18px 0 16px 0" title-placement="center">缓存</n-divider>
                 <div>
                     <n-button @click="cleanLocalStorage" size="small" type="primary">清除缓存并重载</n-button>
+                </div>
+                <n-divider style="margin: 18px 0 16px 0" title-placement="center">缓存标签页面</n-divider>
+                <div class="flex justify-center">
+                    <n-switch v-model:value="openKeepAlive">
+                        <template #checked>开启</template>
+                        <template #unchecked>关闭</template>
+                    </n-switch>
                 </div>
             </n-drawer-content>
         </n-drawer>
@@ -282,7 +346,7 @@ function cleanLocalStorage() {
         <n-layout style="height: 100%">
             <n-layout-header style="height: 50px" class="flex items-center bg-white">
                 <div
-                    class="flex justify-center flex-shrink-0 items-center h-full overflow-hidden"
+                    class="flex xs:hidden justify-center flex-shrink-0 items-center h-full overflow-hidden"
                     :style="{
                         backgroundColor: menuColor,
                         width: menuCollapsed ? '64px' : '240px',
@@ -301,7 +365,7 @@ function cleanLocalStorage() {
                 </div>
                 <div
                     :style="{
-                        backgroundColor: themeIsDark ? menuColor : headerColor,
+                        backgroundColor: themeIsDark ? menuColor : headerColorLight,
                         transition: 'background-color 0.3s var(--n-bezier)',
                     }"
                     class="main-header flex justify-between w-full h-full shadow z-10"
@@ -319,6 +383,7 @@ function cleanLocalStorage() {
             </n-layout-header>
             <n-layout has-sider>
                 <n-layout-sider
+                    class="xs:hidden"
                     collapse-mode="width"
                     :collapsed-width="64"
                     :width="240"
@@ -341,15 +406,32 @@ function cleanLocalStorage() {
                 </n-layout-sider>
                 <n-layout-content
                     :content-style="{
-                        backgroundColor: containerColor,
+                        backgroundColor: themeIsDark ? Color(menuColor).lighten(0.4) : '#f1f2f3',
                         transition: 'background-color 0.3s var(--n-bezier)',
                         height: 'calc( 100vh - 50px)',
+                        padding: '6px',
+                        boxSizing: 'border-box',
                     }"
                 >
                     <n-tabs type="card" v-model:value="currentTabKey" @update:value="handleTabChange">
                         <n-tab v-for="tab in tabs" :key="tab.key" :name="tab.key" :label="tab.label" :closable="tab.closable" />
                     </n-tabs>
-                    <router-view />
+                    <!--这里使用overflow:hidden，是为了防止过渡时出现滚动条和布局显示异常-->
+                    <!--因此子组件需要使用LayoutPageContainer组件进行包裹-->
+                    <div class="w-full overflow-hidden" style="height: calc(100vh - 102px)">
+                        <router-view v-if="openKeepAlive" v-slot="{ Component }">
+                            <Transition>
+                                <keep-alive>
+                                    <component :is="Component" />
+                                </keep-alive>
+                            </Transition>
+                        </router-view>
+                        <router-view v-else v-slot="{ Component }">
+                            <Transition>
+                                <component :is="Component" />
+                            </Transition>
+                        </router-view>
+                    </div>
                 </n-layout-content>
             </n-layout>
         </n-layout>
@@ -359,11 +441,11 @@ function cleanLocalStorage() {
 <style lang="scss" scoped>
 /* we will explain what these classes do next! */
 .v-enter-active {
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease;
 }
 
 .v-leave-active {
-    transition: opacity 0s ease;
+    transition: opacity 0.3s ease;
 }
 
 .v-enter-from,

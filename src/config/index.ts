@@ -1,7 +1,6 @@
-import { MenuOption, NIcon } from 'naive-ui';
+import { NIcon } from 'naive-ui';
 import { h, VNodeChild } from 'vue';
-import { RouteRecordRaw, RouteRecordRedirectOption, RouterLink } from 'vue-router';
-import { HomeOutlined, UserOutlined, VideoCameraOutlined, UploadOutlined, SettingOutlined } from '@vicons/antd';
+import { HomeOutlined, SettingOutlined } from '@vicons/antd';
 
 export const LOCAL_TOKEN_KEY = 'naive-admin-x-token';
 export const UNIQUE_APP_PREFIX_KEY = 'naive-admin-x_';
@@ -9,10 +8,24 @@ export const LOGO_TEXT = 'Naive Admin X';
 export const LOGO_SHORT_TEXT = 'NAX';
 export const LOGO_IMG = 'https://avatars.githubusercontent.com/u/25154432?s=200&v=4';
 export const WEBSITE_DESC = 'a brilliant powerful admin, just manage what you want !';
+export const MENU_BASE_PATH = '/';
 
-function initMenuLabel(label: string, routerName?: string) {
-    return routerName ? h(RouterLink, { to: { name: routerName } }, () => label) : label;
-}
+export const THEME_PRIMARY_COLORS = [
+    '#2995fa',
+    '#1777FF',
+    '#9251ea',
+    '#eb2f96',
+    '#fa541c',
+    '#fa8c16',
+    '#efab25',
+    '#fadb14',
+    '#45bd15',
+    '#0ea22c',
+    '#13c2c2',
+];
+
+export const LIGHT_THEME_MENU_COLORS = ['#222', '#161717', '#18232d', '#fff', '#fbfcff', '#111', '#000', '#001427'];
+export const DARK_THEME_MENU_COLORS = ['#222', '#121212', '#000', '#16181c'];
 
 export type MenuRoute = {
     // 是否是菜单 在菜单栏显示
@@ -52,7 +65,7 @@ export const MENUS: MenuRoute[] = [
     },
     {
         isMenu: true,
-        path: 'settings/',
+        path: 'settings',
         name: 'Settings',
         label: '设置',
         icon: () => h(NIcon, null, { default: () => h(SettingOutlined) }),
@@ -71,8 +84,6 @@ export const MENUS: MenuRoute[] = [
 // 菜单列表
 export const MENUS_LIST = (() => {
     const namesSet = new Set<string>();
-    let rootPath = '/';
-
     function traverse(list: any[], upperPath: string) {
         const sec = [];
         for (let i = 0; i < list.length; i++) {
@@ -87,10 +98,14 @@ export const MENUS_LIST = (() => {
             if (item.isMenu) {
                 sec.push(item);
                 // 路由绝对路径 = 上级路径 + 当前路径  方便浏览器地址栏跳转 菜单栏选中
-                const currentAbsolutePath = upperPath + item.path;
+                let currentAbsolutePath = '';
+                if (item.path) {
+                    currentAbsolutePath = upperPath.endsWith('/') ? `${upperPath}${item.path}` : `${upperPath}/${item.path}`;
+                } else {
+                    currentAbsolutePath = upperPath;
+                }
                 const label = item.label;
                 item.tabName = item.tabName || label;
-                item.label = item.children ? label : () => initMenuLabel(label, item.name);
                 // 菜单栏key = 路由名称
                 item.key = item.name;
                 item.absolutePath = currentAbsolutePath;
@@ -99,5 +114,5 @@ export const MENUS_LIST = (() => {
         }
         return sec.length > 0 ? sec : null;
     }
-    return (traverse(MENUS, rootPath) || []) as MenuRoute[];
+    return (traverse(MENUS, MENU_BASE_PATH) || []) as MenuRoute[];
 })();

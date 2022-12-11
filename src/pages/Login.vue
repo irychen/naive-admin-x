@@ -46,7 +46,9 @@ const router = useRouter();
 
 function handleLogin() {
     setToken('123456');
-    router.push('/');
+    router.push({
+        name: 'Home',
+    });
 }
 
 const getLogoFrontEndText = () => {
