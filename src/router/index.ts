@@ -7,7 +7,7 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
         name: 'Home',
-        component: () => import('@/pages/Home.vue'),
+        component: () => import('@/layouts/BaseLayout.vue'),
         children: MENUS as RouteRecordRaw[],
     },
     {

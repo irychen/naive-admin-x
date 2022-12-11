@@ -4,6 +4,7 @@ import { RouteRecordRaw, RouteRecordRedirectOption, RouterLink } from 'vue-route
 import { HomeOutlined, UserOutlined, VideoCameraOutlined, UploadOutlined, SettingOutlined } from '@vicons/antd';
 
 export const LOCAL_TOKEN_KEY = 'naive-admin-x-token';
+export const UNIQUE_APP_PREFIX_KEY = 'naive-admin-x_';
 export const LOGO_TEXT = 'Naive Admin X';
 export const LOGO_SHORT_TEXT = 'NAX';
 export const LOGO_IMG = 'https://avatars.githubusercontent.com/u/25154432?s=200&v=4';
@@ -16,8 +17,8 @@ function initMenuLabel(label: string, routerName?: string) {
 export type MenuRoute = {
     // 是否是菜单 在菜单栏显示
     isMenu: boolean;
-    // 路由名称
-    name?: string;
+    // 路由名称和菜单唯一标识（非空）
+    name: string;
     // 路由路径
     path?: string;
     // 菜单名称
@@ -98,6 +99,5 @@ export const MENUS_LIST = (() => {
         }
         return sec.length > 0 ? sec : null;
     }
-
     return (traverse(MENUS, rootPath) || []) as MenuRoute[];
 })();

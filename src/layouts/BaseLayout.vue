@@ -9,7 +9,6 @@ import {
     NTabs,
     NTab,
     NColorPicker,
-    NLayoutFooter,
     NSwitch,
     NLayoutSider,
     NLayoutContent,
@@ -17,8 +16,8 @@ import {
     MenuOption,
     NIcon,
 } from 'naive-ui';
-import { h, ref, watch, onBeforeMount, Transition, onMounted } from 'vue';
-import { SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined, HomeOutlined, UserOutlined, VideoCameraOutlined, UploadOutlined } from '@vicons/antd';
+import { h, ref, watch, Transition, onMounted } from 'vue';
+import { SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@vicons/antd';
 import { useRouter } from 'vue-router';
 import { MENUS_LIST, LOGO_TEXT, LOGO_SHORT_TEXT, MenuRoute } from '@/config';
 import { toRefs } from 'vue';
@@ -26,6 +25,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { darkThemeMenuColorList, lightThemeMenuColorList } from '@/store/themeStore/index.js';
 import CheckBoxColor from '@/components/CheckBoxColor/index.vue';
 import { useLocalStorage } from '@/hooks/base/useLocalStorage';
+import { RouteLocationNormalizedLoaded } from 'vue-router';
 
 const pageTypeMap = new Map<string, string>([
     ['edit', '编辑'],
@@ -35,7 +35,7 @@ const pageTypeMap = new Map<string, string>([
 const themeStore = useThemeStore();
 const { toggleMenuCollapse } = themeStore;
 const menuSelectedKey = ref<string>('');
-useLocalStorage('admin_x_menuSelectedKey', menuSelectedKey);
+useLocalStorage('menuSelectedKey', menuSelectedKey);
 const {
     primaryColorIsDark,
     currentLightMenuColor,
@@ -55,7 +55,7 @@ const menuOptions: MenuOption[] = MENUS_LIST;
 const absolutePathMenuMap = new Map<string, MenuRoute>();
 const nameMenuMap = new Map<string, MenuRoute>();
 const currentTabKey = ref<string>('');
-useLocalStorage('admin_x_currentTabKey', currentTabKey);
+useLocalStorage('currentTabKey', currentTabKey);
 
 // 遍历菜单列表，生成菜单路由映射表（name、absolutePath）
 function traverseMenuOptions(menuOptions: MenuRoute[]) {
@@ -82,30 +82,47 @@ type tabItem = {
     closable?: boolean;
 };
 const tabs = ref<tabItem[]>([]);
-useLocalStorage('admin_x_x_tabs', tabs);
+useLocalStorage('tabs', tabs);
 // 根据路由 设置选中的菜单
 onMounted(() => {
-    const path = router.currentRoute.value.path;
-    const query = router.currentRoute.value.query;
-    const fullPath = router.currentRoute.value.fullPath;
+    updateTabAndMenuKey(router.currentRoute.value);
+});
+
+watch(
+    () => router.currentRoute.value,
+    newRoute => {
+        updateTabAndMenuKey(newRoute);
+    },
+);
+
+// 根据路由 设置选中的菜单选中和tab标签页状态（currentTabKey、tabs）
+function updateTabAndMenuKey(route: RouteLocationNormalizedLoaded) {
+    const { query, path, fullPath } = route;
+    // 用全路径匹配菜单 优先级最高
     let target = absolutePathMenuMap.get(fullPath);
     let notMenuPage = false;
-    if (!target) {
-        notMenuPage = true;
-    }
+    // 如果没有匹配到菜单，说明不是菜单页面，应该是非菜单页面
+    if (!target) notMenuPage = true;
+    // 如果没有匹配到菜单，用path匹配菜单
     target = target || absolutePathMenuMap.get(path);
-    if (target && target.name && !target.children) {
-        if (target.absolutePath === fullPath) {
-            menuSelectedKey.value = target.name;
-        } else {
-            menuSelectedKey.value = '';
-        }
+    // 如果匹配到菜单
+    if (target) {
+        // 假设是菜单页面就用name寻找菜单tab
         let tab = tabs.value.find(i => i.name === target?.name);
         if (notMenuPage) {
+            // 如果不是菜单页面，就用key寻找菜单tab
             tab = tabs.value.find(i => i.key === fullPath);
+            // 如果是非菜单页面，直接设置菜单选中为空
+            menuSelectedKey.value = '';
+        } else {
+            // 如果是菜单页面，设置菜单选中为菜单的name
+            menuSelectedKey.value = target.name;
         }
+        // 获取页面类型
         const { type } = query;
+        // 获取页面类型对应的前缀
         const labelPrefix = pageTypeMap.get(type as string) || '';
+        // 如果没有找到tab，就添加一个tab
         if (!tab) {
             tabs.value.push({
                 label: labelPrefix + target.tabName,
@@ -115,57 +132,20 @@ onMounted(() => {
                 closable: true,
             });
         }
+        // 设置当前选中的tab
         currentTabKey.value = fullPath;
     }
-});
-
-watch(
-    () => router.currentRoute.value,
-    newRoute => {
-        const path = newRoute.path;
-        const query = newRoute.query;
-        const fullPath = newRoute.fullPath;
-        let target = absolutePathMenuMap.get(fullPath);
-        let notMenuPage = false;
-        if (!target) {
-            notMenuPage = true;
-        }
-        target = target || absolutePathMenuMap.get(path);
-        if (target && target.name && !target.children) {
-            if (target.absolutePath === fullPath) {
-                menuSelectedKey.value = target.name;
-            } else {
-                menuSelectedKey.value = '';
-            }
-            let tab = tabs.value.find(i => i.name === target?.name);
-            if (notMenuPage) {
-                tab = tabs.value.find(i => i.key === fullPath);
-            }
-            const { type } = query;
-            const labelPrefix = pageTypeMap.get(type as string) || '';
-            if (!tab) {
-                tabs.value.push({
-                    label: labelPrefix + target.tabName,
-                    key: fullPath,
-                    name: target.name,
-                    absolutePath: fullPath,
-                    closable: true,
-                });
-            }
-            currentTabKey.value = fullPath;
-        }
-    },
-);
+}
 
 // 延迟菜单展开的状态 延迟全名显示Logo
 const delayedMenuCollapsed = ref(menuCollapsed.value);
-let timeId: number;
+let timerId: number;
 watch(
     () => menuCollapsed.value,
     value => {
         if (!value) {
-            if (timeId) clearTimeout(timeId);
-            timeId = setTimeout(() => {
+            if (timerId) clearTimeout(timerId);
+            timerId = setTimeout(() => {
                 delayedMenuCollapsed.value = value;
             }, 200);
         } else {
