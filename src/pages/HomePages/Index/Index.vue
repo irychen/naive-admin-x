@@ -2,7 +2,11 @@
     <LayoutPageContainer>
         <n-card>
             <div class="text-center">
-                <n-gradient-text class="text-[30px]">Welcome to the Naive UI Admin Dashboard Template</n-gradient-text>
+                <n-gradient-text class="text-[30px] flex-wrap"
+                    >Welcome to the Naive
+                    <br />
+                    Admin X
+                </n-gradient-text>
             </div>
             <p class="text-center">This is a template for Naive UI Admin Dashboard</p>
         </n-card>
@@ -29,9 +33,9 @@
                 <br />
                 <n-gradient-text type="danger"> Live Forever</n-gradient-text>
                 <br />
-                <n-gradient-text :size="24" type="warning"> Married with Children</n-gradient-text>
+                <n-gradient-text type="warning"> Married with Children</n-gradient-text>
                 <br />
-                <n-gradient-text :size="24" type="success"> Back in the USSR</n-gradient-text>
+                <n-gradient-text type="success"> Back in the USSR</n-gradient-text>
             </n-card>
         </div>
     </LayoutPageContainer>
