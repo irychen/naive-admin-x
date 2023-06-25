@@ -5,10 +5,11 @@
                 <n-gradient-text class="text-[30px] flex-wrap"
                     >Welcome to the Naive
                     <br />
-                    Admin X
+                    Admin X aa
                 </n-gradient-text>
             </div>
             <p class="text-center">This is a template for Naive UI Admin Dashboard</p>
+            <n-input placeholder="hello sss"></n-input>
         </n-card>
         <div class="flex">
             <n-card title="Button">
@@ -43,5 +44,5 @@
 
 <script setup lang="ts">
 import LayoutPageContainer from '@/components/LayoutPageContainer/Index.vue';
-import { NCard, NButton, NSpace, NGradientText } from 'naive-ui';
+import { NCard, NInput, NButton, NSpace, NGradientText } from 'naive-ui';
 </script>

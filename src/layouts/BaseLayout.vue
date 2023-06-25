@@ -52,7 +52,7 @@ const {
 } = toRefs(themeStore);
 const router = useRouter();
 const menuOptions: MenuOption[] = MENUS_LIST;
-const openKeepAlive = ref<boolean>(false);
+const openKeepAlive = ref<boolean>(true);
 useLocalStorage('openKeepAlive', openKeepAlive);
 // absolutePath Menu Map
 const absolutePathMenuMap = new Map<string, MenuRoute>();
@@ -406,7 +406,7 @@ useEventListener('orientationchange', () => {
                 </n-layout-sider>
                 <n-layout-content
                     :content-style="{
-                        backgroundColor: themeIsDark ? Color(menuColor).lighten(0.4) : '#f1f2f3',
+                        backgroundColor: themeIsDark ? Color(menuColor).lighten(0.4).hex() : '#f1f2f3',
                         transition: 'background-color 0.3s var(--n-bezier)',
                         height: 'calc( 100vh - 50px)',
                         padding: '6px',

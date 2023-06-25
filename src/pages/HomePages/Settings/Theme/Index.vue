@@ -37,13 +37,14 @@
                         </div>
                     </n-form-item>
                 </n-form>
+                <n-input placeholder="hello"></n-input>
             </n-card>
         </div>
     </LayoutPageContainer>
 </template>
 
 <script setup lang="ts">
-import CheckBoxColor from '@/components/CheckBoxColor/Index.vue';
+import CheckBoxColor from '@/components/CheckBoxColor/index.vue';
 import { NForm, NFormItem, NCard, NSelect, FormInst, FormItemRule, useMessage } from 'naive-ui';
 import { h, ref, watch, onMounted, toRefs } from 'vue';
 import LayoutPageContainer from '@/components/LayoutPageContainer/Index.vue';
@@ -54,4 +55,8 @@ const themeStore = useThemeStore();
 const { primaryColor, themeIsDark, menuColor, currentLightMenuColor, currentDarkMenuColor } = toRefs(themeStore);
 
 import { THEME_PRIMARY_COLORS, LIGHT_THEME_MENU_COLORS, DARK_THEME_MENU_COLORS } from '@/config';
+
+onMounted(() => {
+    console.log('hello world');
+});
 </script>
