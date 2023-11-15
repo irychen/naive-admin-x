@@ -206,6 +206,36 @@ function handleMenuNameChange(name: string) {
     }
 }
 
+watch(
+    () => tabs.value,
+    newTab => {
+        if (newTab.length === 1) {
+            newTab.forEach(tab => {
+                tab.closable = false;
+            });
+        } else {
+            newTab.forEach(tab => {
+                tab.closable = true;
+            });
+        }
+    },
+);
+
+function handleCloseTabChange(key: string) {
+    const index = tabs.value.findIndex(i => i.key === key);
+    if (index !== -1) {
+        tabs.value.splice(index, 1);
+    }
+    if (tabs.value.length === 0) {
+        router.push('/');
+    } else {
+        const currentTab = tabs.value[index - 1] || tabs.value[index];
+        if (currentTab) {
+            router.push(currentTab.key);
+        }
+    }
+}
+
 function handleTabChange(key: string) {
     debouncePendingNeedWatchRoute();
     const target = tabs.value.find(i => i.key === key);
@@ -413,7 +443,7 @@ useEventListener('orientationchange', () => {
                         boxSizing: 'border-box',
                     }"
                 >
-                    <n-tabs type="card" v-model:value="currentTabKey" @update:value="handleTabChange">
+                    <n-tabs type="card" v-model:value="currentTabKey" @close="handleCloseTabChange" @update:value="handleTabChange">
                         <n-tab v-for="tab in tabs" :key="tab.key" :name="tab.key" :label="tab.label" :closable="tab.closable" />
                     </n-tabs>
                     <!--这里使用overflow:hidden，是为了防止过渡时出现滚动条和布局显示异常-->
